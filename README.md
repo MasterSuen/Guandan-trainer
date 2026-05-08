@@ -1,1 +1,1 @@
-# -guandan-trainer
+# guandan-trainer
