@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>掼蛋训练器</title>
+<style>
+  :root{
+    --bg:#0f1115;--card:#181b22;--muted:#9aa3b2;--text:#f2f4f8;--accent:#6ea8fe;
+    --good:#3ddc97;--bad:#ff6b6b;--warn:#ffd166;--border:#2a2f3a;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Segoe UI",sans-serif;background:var(--bg);color:var(--text)}
+  .wrap{max-width:520px;margin:0 auto;padding:18px 14px 40px}
+  h1{font-size:24px;margin:8px 0 4px}
+  .sub{color:var(--muted);font-size:14px;line-height:1.5;margin-bottom:14px}
+  .tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0}
+  button{border:0;border-radius:14px;padding:12px 10px;font-size:16px;font-weight:650;background:#252a35;color:var(--text)}
+  button.active{background:var(--accent);color:#08111f}
+  button:active{transform:scale(.985)}
+  .panel{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:16px;margin-top:12px}
+  .row{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+  .bigcard{height:190px;border:1px solid var(--border);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:68px;font-weight:800;background:#10131a;margin:14px 0}
+  .red{color:#ff5b6e}.black{color:#f2f4f8}
+  .choices{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+  .choice{padding:16px 8px}
+  .small{font-size:13px;color:var(--muted);line-height:1.55}
+  .stat{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+  .box{background:#11151d;border:1px solid var(--border);border-radius:14px;padding:10px;text-align:center}
+  .num{font-size:22px;font-weight:800}
+  .good{color:var(--good)}.bad{color:var(--bad)}.warn{color:var(--warn)}
+  .hidden{display:none}
+  .pill{padding:6px 10px;border-radius:999px;background:#10131a;border:1px solid var(--border);color:var(--muted);font-size:13px}
+  .log{min-height:48px;margin-top:12px;color:var(--muted);line-height:1.5}
+  .scenario{font-size:17px;line-height:1.7}
+  .cards{font-size:28px;letter-spacing:2px;margin:12px 0}
+  .footer{margin-top:16px;color:var(--muted);font-size:12px;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>掼蛋训练器</h1>
+  <div class="sub">适合一个人在苹果手机上随时练。目标不是记全牌，而是训练关键牌反射、红最小记忆、尾局资格判断。</div>
+
+  <div class="tabs">
+    <button id="tab1" class="active" onclick="showTab(1)">识别</button>
+    <button id="tab2" onclick="showTab(2)">记红</button>
+    <button id="tab3" onclick="showTab(3)">尾局</button>
+  </div>
+
+  <section id="p1" class="panel">
+    <div class="row"><b>关键牌识别</b><span class="pill">每天3分钟</span></div>
+    <div class="small">看到牌后，立刻判断：鬼 / 级牌 / 红最小 / 黑最小。练的是反射，不是背诵。</div>
+    <div id="card1" class="bigcard">开始</div>
+    <div class="choices">
+      <button class="choice" onclick="answerType('鬼')">鬼</button>
+      <button class="choice" onclick="answerType('级')">级牌</button>
+      <button class="choice" onclick="answerType('红最小')">红最小</button>
+      <button class="choice" onclick="answerType('黑最小')">黑最小</button>
+    </div>
+    <div class="stat">
+      <div class="box"><div class="num" id="right1">0</div><div class="small">正确</div></div>
+      <div class="box"><div class="num" id="wrong1">0</div><div class="small">错误</div></div>
+      <div class="box"><div class="num" id="left1">20</div><div class="small">剩余</div></div>
+    </div>
+    <div class="log" id="log1">点任意答案开始。默认级牌=2，最小牌=3。</div>
+    <button style="width:100%;margin-top:10px" onclick="resetIdentify()">重新开始</button>
+  </section>
+
+  <section id="p2" class="panel hidden">
+    <div class="row"><b>红色最小牌记忆</b><span class="pill">每天5分钟</span></div>
+    <div class="small">连续翻牌，只记红色最小牌出现了几张。结束后作答。训练中后期不漏关键奖励牌。</div>
+    <div id="card2" class="bigcard">开始</div>
+    <div class="row">
+      <button onclick="nextMemory()" style="flex:1">翻下一张</button>
+      <button onclick="finishMemory()" style="flex:1">结束答题</button>
+    </div>
+    <div id="answerArea" class="hidden" style="margin-top:12px">
+      <div class="small">刚才红色最小牌一共出现几张？</div>
+      <div class="choices" style="grid-template-columns:repeat(4,1fr);margin-top:10px">
+        <button onclick="checkMemory(0)">0</button><button onclick="checkMemory(1)">1</button>
+        <button onclick="checkMemory(2)">2</button><button onclick="checkMemory(3)">3</button>
+      </div>
+      <button style="width:100%;margin-top:10px" onclick="checkMemory(4)">4张或以上</button>
+    </div>
+    <div class="log" id="log2">点“翻下一张”开始。不要刻意背全部牌，只盯红色最小牌。</div>
+    <button style="width:100%;margin-top:10px" onclick="resetMemory()">重新开始</button>
+  </section>
+
+  <section id="p3" class="panel hidden">
+    <div class="row"><b>尾局资格判断</b><span class="pill">每天5分钟</span></div>
+    <div class="small">看一个小尾局，先判断有没有出最小牌资格，再决定第一目标。</div>
+    <div class="scenario" id="scenario"></div>
+    <div class="choices">
+      <button onclick="answerScenario('先拿资格')">先拿资格</button>
+      <button onclick="answerScenario('保红最小')">保红最小</button>
+      <button onclick="answerScenario('帮队友走')">帮队友走</button>
+      <button onclick="answerScenario('直接冲完')">直接冲完</button>
+    </div>
+    <div class="log" id="log3"></div>
+    <button style="width:100%;margin-top:10px" onclick="newScenario()">下一题</button>
+  </section>
+
+  <div class="footer">建议：每天只练一个模块，不要贪多。每次练到“不累”就停。</div>
+</div>
+
+<script>
+let level='2', min='3';
+const suits=[['♠','black'],['♣','black'],['♥','red'],['♦','red']];
+const ranks=['3','4','5','6','7','8','9','10','J','Q','K','A','2'];
+let deck1=[], current=null, right1=0, wrong1=0;
+let memDeck=[], memIndex=0, memRed=0, memSeen=0;
+
+function keyCards(){
+  let arr=[];
+  arr.push({txt:'大王',cls:'red',type:'鬼'});
+  arr.push({txt:'大王',cls:'red',type:'鬼'});
+  arr.push({txt:'小王',cls:'black',type:'鬼'});
+  arr.push({txt:'小王',cls:'black',type:'鬼'});
+  for(let d=0;d<2;d++){
+    for(const s of suits){arr.push({txt:s[0]+level,cls:s[1],type:'级'});}
+    for(const s of suits){arr.push({txt:s[0]+min,cls:s[1],type:s[1]=='red'?'红最小':'黑最小'});}
+  }
+  return shuffle(arr);
+}
+function shuffle(a){for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function showTab(n){
+  for(let i=1;i<=3;i++){document.getElementById('p'+i).classList.add('hidden');document.getElementById('tab'+i).classList.remove('active')}
+  document.getElementById('p'+n).classList.remove('hidden');document.getElementById('tab'+n).classList.add('active')
+}
+function resetIdentify(){deck1=keyCards();right1=0;wrong1=0;current=null;updateStats();drawIdentify();document.getElementById('log1').innerHTML='开始。只求看见就分类，不求快。'}
+function drawIdentify(){
+  if(deck1.length===0){document.getElementById('card1').innerHTML='完成';document.getElementById('log1').innerHTML='本轮结束。正确率不是重点，重点是有没有越来越轻松。';current=null;return;}
+  current=deck1.pop();let el=document.getElementById('card1');el.innerHTML=current.txt;el.className='bigcard '+current.cls;updateStats();
+}
+function answerType(t){
+  if(!current){resetIdentify();return;}
+  if(t===current.type){right1++;document.getElementById('log1').innerHTML='<span class="good">对。</span> '+current.txt+' = '+current.type;}
+  else{wrong1++;document.getElementById('log1').innerHTML='<span class="bad">错。</span> '+current.txt+' 应该是 '+current.type;}
+  drawIdentify();
+}
+function updateStats(){document.getElementById('right1').innerText=right1;document.getElementById('wrong1').innerText=wrong1;document.getElementById('left1').innerText=deck1.length}
+
+function fullDeck(){
+  let arr=[];
+  for(let d=0;d<2;d++){
+    for(const r of ranks){for(const s of suits){arr.push({txt:s[0]+r,cls:s[1],redMin:(r===min&&s[1]==='red')});}}
+    arr.push({txt:'小王',cls:'black',redMin:false});arr.push({txt:'大王',cls:'red',redMin:false});
+  }
+  return shuffle(arr);
+}
+function resetMemory(){memDeck=fullDeck().slice(0,26);memIndex=0;memRed=0;memSeen=0;document.getElementById('card2').innerHTML='开始';document.getElementById('card2').className='bigcard';document.getElementById('answerArea').classList.add('hidden');document.getElementById('log2').innerHTML='开始后只盯红色最小牌。'}
+function nextMemory(){
+  if(memDeck.length===0)resetMemory();
+  if(memIndex>=memDeck.length){finishMemory();return;}
+  let c=memDeck[memIndex++];memSeen++;
+  if(c.redMin)memRed++;
+  let el=document.getElementById('card2');el.innerHTML=c.txt;el.className='bigcard '+c.cls;
+  document.getElementById('log2').innerHTML='已翻 '+memSeen+' 张。心里只记红色最小牌数量。';
+}
+function finishMemory(){document.getElementById('answerArea').classList.remove('hidden');document.getElementById('log2').innerHTML='现在作答：红色最小牌出现几张？'}
+function checkMemory(n){
+  let ok=(n===memRed)||(n===4&&memRed>=4);
+  document.getElementById('log2').innerHTML= ok?'<span class="good">对。</span> 本轮红色最小牌出现 '+memRed+' 张。':'<span class="bad">错。</span> 实际是 '+memRed+' 张。不要急，目标是少漏。';
+}
+
+const scenarios=[
+ {hand:'♥3、♦3、对Q、单A、小炸5', qual:'没有', teammate:'队友还剩3张', ans:'先拿资格', why:'没有资格时，红3再值钱也不能安全兑现。第一目标是用最低成本压一次。'},
+ {hand:'♥3、黑3、单K、单A', qual:'已有', teammate:'队友已走', ans:'保红最小', why:'已有资格且队友已走，核心是把最小牌留到最后吃奖励。'},
+ {hand:'黑3、对10、对K、单9', qual:'已有', teammate:'队友剩1张', ans:'帮队友走', why:'队友只剩1张时，优先让队友走，别为了黑3小奖励破坏局面。'},
+ {hand:'♥3、对8、三张J、单2', qual:'没有', teammate:'队友牌多', ans:'先拿资格', why:'没资格又有红3，必须尽早买门票，否则尾局可能反送对手。'},
+ {hand:'无3、对A、单K、单Q', qual:'已有', teammate:'队友有红3', ans:'帮队友走', why:'你无最小牌，队友有红3，你的职责是清道，不是自己抢尾局。'},
+ {hand:'♥3、♦3、单小王、单A', qual:'已有', teammate:'队友已走', ans:'保红最小', why:'红色对子最小牌价值高，已有资格时不要提前拆掉。'}
+];
+let sc=null;
+function newScenario(){
+  sc=scenarios[Math.floor(Math.random()*scenarios.length)];
+  document.getElementById('scenario').innerHTML='<div class="cards">'+sc.hand+'</div><div>你的资格：<b>'+sc.qual+'</b></div><div>'+sc.teammate+'</div><div class="small">问：这一手第一目标是什么？</div>';
+  document.getElementById('log3').innerHTML='先看资格，再看红最小，再看队友。'
+}
+function answerScenario(a){
+  if(!sc)newScenario();
+  document.getElementById('log3').innerHTML=(a===sc.ans?'<span class="good">对。</span> ':'<span class="bad">不优先。</span> ')+'建议：'+sc.ans+'。'+sc.why;
+}
+resetIdentify();resetMemory();newScenario();
+</script>
+</body>
+</html>
